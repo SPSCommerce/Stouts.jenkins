@@ -3,16 +3,29 @@
 - name: jenkins restart
   service: name=jenkins state=restarted
   sudo: yes
+  notify: jenkins pause
+
+- name: jenkins pause
+  wait_for: host={{ jenkins_http_host }} port={{ jenkins_http_port }} delay=10 
   
 - name: jenkins update jobs
-  command: "{{jenkins_home}}/jobs/job.sh {{item.item.name}}"
+  command: "{{ jenkins_home }}/jobs/job.sh {{ item.item.name }}"
   sudo_user: "{{ jenkins_user }}"
+  sudo: yes
   when: item.changed
   with_items: jenkins_jobs_changed.results
+  register: result
+  until: result.rc == 0
+  retries: 5
+  delay: 10
 
 - name: jenkins reload configuration
   command: java -jar {{jenkins_home}}/jenkins-cli.jar -s {{jenkins_url}}{{jenkins_prefix}} reload-configuration
   sudo_user: "{{ jenkins_user }}"
+  register: result
+  until: result.rc == 0
+  retries: 5
+  delay: 10
 
 - name: nginx reload
   service: name=nginx state=reloaded

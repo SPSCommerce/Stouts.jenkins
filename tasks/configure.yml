@@ -29,6 +29,7 @@
   register: jenkins_cli
   until: "'OK' in jenkins_cli.msg or 'file already exists' in jenkins_cli.msg"
   sudo: yes  
+  sudo_user: "{{ jenkins_user }}"
   retries: 10
   delay: 10
 
